@@ -10,11 +10,10 @@
 #include "DHT.h"     // Стандартная библиотека Arduino
 #include "Average.h" // https://github.com/MajenkoLibraries/Average
 #include <math.h>
-
-#include "fDigitsSegtPin.h" //https://github.com/KLszTsu/fDigitsSegtPin
+#include "lcd.h"     // https://github.com/Sylaina/oled-display
 
 #define DEBUG 1
-// #define SEG_IND 1            // есть индикатор
+#define OLED_IND            // есть индикатор
 #define DHTTYPE DHT11       // Если используется не DHT11, надо поменять
 #define relaypin 4          // Реле прицеплено к пину №4
 #define dhtpin 5            // Датчик прицеплен к пину №5
@@ -25,26 +24,9 @@
 #define FAN_COOLDOWN_TIME 3 // время охлаждения вентилятора в секундах
 #define RELATIVE 0          // режим отображения порога влажности устанавливаем абсолютные величины
 
-// #ifdef SEG_IND
-#define SEG_A 8
-#define SEG_B 10
-#define SEG_C 9
-#define SEG_D 12
-#define SEG_E 11
-#define SEG_F 13
-#define SEG_G A1
-#define SEG_P A0
-#define DIG_1 A2
-#define DIG_2 A5
-#define DIG_3 A4
-#define DIG_4 A3
-// #endif
 
 DHT dht(dhtpin, DHTTYPE);
 Average<float> ave(10); // Для усреднения последних значений с датчика создаём массив на 10 шт. float
-
-// pin assigment as on indicator
-fDigitsSegtPin Display(SEG_E, SEG_D, SEG_P, SEG_C, SEG_G, DIG_4, SEG_B, DIG_3, DIG_2, SEG_F, SEG_A, DIG_1);
 
 volatile float treshold = 11.6;
 volatile bool time_to_measure = false;
@@ -52,13 +34,10 @@ volatile bool relative = false;
 float temperature = 0;
 float relative_humidity = 0;
 float absolute_humidity = 0;
-// float last_displayed=-1;
 int8_t fan_on_time = 0;
 int8_t fan_off_time = 0;
 bool fan_on = false;
 bool fan_cooldown = false;
-
-bool ReadAndPutData();
 
 void btnPressed()
 {
@@ -69,15 +48,6 @@ void btnPressed()
   else
   {
     treshold -= 0.2;
-  }
-  delay(100);
-  uint32_t start = 0;
-  while (start < F_CPU/50000) // многопоточности нет, поэтому приходится показывать
-                              // текущее пороговое значение под прерыванием. Иначе гаснет экран
-                              // на время опроса DHT
-  {
-    Display.Print(treshold);
-    ++start;
   }
 }
 
@@ -113,15 +83,47 @@ void setup()
   TCCR1B |= (1 << CS12);                  // установим делитель
   sei();
   //--- display ---
-  Display.Begin(Type::COMMON_CATHODE);
-  Display.doPrint_firstZero = 1;
+  // lcd_init(LCD_DISP_ON); // init lcd and turn on
+  // lcd_clrscr();
+  // lcd_home();
+  // lcd_puts("Hello World");
   //--- DHT ---
   dht.begin();
 }
 
+bool ReadAndPutData()
+{
+  temperature = dht.readTemperature(); // Опрашиваем датчик
+  relative_humidity = dht.readHumidity();
+  if (isnan(temperature) || isnan(relative_humidity))
+  {
+    return false;
+  }
+  else
+  {
+    absolute_humidity = 6.122 * exp((17.67 * temperature) / (temperature + 243.5)) * relative_humidity * 2.1674 / (273.15 + temperature);
+    ave.push(absolute_humidity);
+    if (DEBUG)
+    {
+      Serial.print("Humidity: ");
+      Serial.print(relative_humidity);
+      Serial.print("% \t");
+      Serial.print("Absolute humidity average: ");
+      Serial.print(ave.mean());
+      Serial.print(" g/m3 \t");
+      Serial.print("Temp.: ");
+      Serial.print(temperature);
+      Serial.println("C");
+      Serial.print("Current treshold: ");
+      Serial.println(treshold);
+    }
+  }
+  return true;
+}
+
 void loop()
 {
-  // Display.Print(1234); // тест экрана
+
   if (time_to_measure)
   {
     if (!ReadAndPutData())
@@ -170,32 +172,3 @@ void loop()
   }
 }
 
-bool ReadAndPutData()
-{
-  temperature = dht.readTemperature(); // Опрашиваем датчик
-  relative_humidity = dht.readHumidity();
-  if (isnan(temperature) || isnan(relative_humidity))
-  {
-    return false;
-  }
-  else
-  {
-    absolute_humidity = 6.122 * exp((17.67 * temperature) / (temperature + 243.5)) * relative_humidity * 2.1674 / (273.15 + temperature);
-    ave.push(absolute_humidity);
-    if (DEBUG)
-    {
-      Serial.print("Humidity: ");
-      Serial.print(relative_humidity);
-      Serial.print("% \t");
-      Serial.print("Absolute humidity average: ");
-      Serial.print(ave.mean());
-      Serial.print(" g/m3 \t");
-      Serial.print("Temp.: ");
-      Serial.print(temperature);
-      Serial.println("C");
-      Serial.print("Current treshold: ");
-      Serial.println(treshold);
-    }
-  }
-  return true;
-}
