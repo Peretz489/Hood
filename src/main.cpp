@@ -1,10 +1,10 @@
-#define DHT_PIN 5           // Датчик прицеплен к пину №5
-#define RELAY_PIN 4         // Реле прицеплено к пину №4
-#define BUTTON_PRESS 2      // На прерывание int0 вешаем кнопку повышения порога (расточительно)
-#define BUTTON_SELECT 6     // На пине 6 выбор кнопки
-#define DHT_QUERY_FREQ 1    // опрос DHT 1 раз в секунду
-#define FAN_WORK_TIME 3     // время работы вентилятора в секундах
-#define FAN_COOLDOWN_TIME 2 // время охлаждения вентилятора в секундах
+#define DHT_PIN 5           
+#define RELAY_PIN 4         
+#define BUTTON_PRESS 2      
+#define BUTTON_SELECT 6     
+#define DHT_QUERY_FREQ 1    
+#define FAN_WORK_TIME 300     
+#define FAN_COOLDOWN_TIME 120 
 
 #include <Arduino.h>
 #include "hood.h"
@@ -33,7 +33,7 @@ void btnPressed()
 
 ISR(TIMER1_COMPA_vect)
 {
-  myhood.StartReadSequence();
+  time_to_measure=true;
 }
 
 void setup()
@@ -56,4 +56,9 @@ void setup()
 
 void loop()
 {
+  if (time_to_measure)
+  {
+    myhood.StartReadSequence();
+    time_to_measure = false;
+  }
 }
