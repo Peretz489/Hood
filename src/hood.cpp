@@ -86,11 +86,13 @@ namespace hood
     void Hood::IncreaseTreshold()
     {
         _treshold += 0.2;
+        UpdateDisplay();
     }
 
     void Hood::DecreaseTreshold()
     {
         _treshold -= 0.2;
+        UpdateDisplay();
     }
 
     void Hood::UpdateDisplay()
