@@ -20,8 +20,6 @@ namespace hood
         uint16_t fan_cooldown_time;
         uint8_t dhtpin;
         uint8_t relaypin;
-        uint8_t button_press;
-        uint8_t button_select;
         DhtType sensor_type;
     };
 
@@ -30,8 +28,6 @@ namespace hood
     public:
         explicit Hood(uint8_t dhtpin,
                       uint8_t relaypin,
-                      uint8_t button_press,
-                      uint8_t button_sel,
                       uint16_t fan_on_time,
                       uint16_t fan_cooldown_time,
                       DhtType sensor_type);

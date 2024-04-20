@@ -4,22 +4,14 @@ extern uint8_t SmallFontRus[]; // OLED font
 
 namespace hood
 {
-    Hood::Hood(uint8_t dhtpin, uint8_t relaypin, uint8_t button_press, uint8_t button_sel, uint16_t fan_on_time, uint16_t fan_cooldown_time, DhtType sensor_type)
+    Hood::Hood(uint8_t dhtpin, uint8_t relaypin, uint16_t fan_on_time, uint16_t fan_cooldown_time, DhtType sensor_type)
         : _config(HoodConfig{fan_on_time,
                              fan_cooldown_time,
                              dhtpin,
                              relaypin,
-                             button_press,
-                             button_sel,
                              sensor_type}),
           _ave(Average<float>(10))
     {
-        //--- relay ---
-        pinMode(_config.relaypin, OUTPUT);
-        digitalWrite(_config.relaypin, HIGH); // Relay off
-        //--- buttons ----
-        pinMode(_config.button_press, INPUT_PULLUP);
-        pinMode(_config.button_select, INPUT_PULLUP);
     }
 
     Hood &Hood::InitDisplay()

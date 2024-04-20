@@ -3,16 +3,14 @@
 #define BUTTON_PRESS 2      
 #define BUTTON_SELECT 6     
 #define DHT_QUERY_FREQ 1    
-#define FAN_WORK_TIME 300     
-#define FAN_COOLDOWN_TIME 120 
+#define FAN_WORK_TIME 300     // 5 минут работаем
+#define FAN_COOLDOWN_TIME 120 // 2 минуты отдыхаем
 
 #include <Arduino.h>
 #include "hood.h"
 
 hood::Hood myhood(DHT_PIN,
                   RELAY_PIN,
-                  BUTTON_PRESS,
-                  BUTTON_SELECT,
                   FAN_WORK_TIME,
                   FAN_COOLDOWN_TIME,
                   hood::DhtType::Type11);
@@ -38,6 +36,12 @@ ISR(TIMER1_COMPA_vect)
 
 void setup()
 {
+  //--- relay ---
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, HIGH); // Relay off
+  //--- buttons ----
+  pinMode(BUTTON_PRESS, INPUT_PULLUP);
+  pinMode(BUTTON_SELECT, INPUT_PULLUP);
   //--- key interrupt ---
   attachInterrupt(0, btnPressed, FALLING);
   //--- timer ---
