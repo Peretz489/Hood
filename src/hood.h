@@ -23,6 +23,10 @@ namespace hood
         DhtType sensor_type;
     };
 
+    class Menu{
+
+    };
+
     class Hood
     {
     public:
