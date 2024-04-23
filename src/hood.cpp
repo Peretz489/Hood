@@ -4,11 +4,22 @@ extern uint8_t SmallFontRus[]; // OLED font
 
 namespace hood
 {
-    Hood::Hood(uint8_t dhtpin, uint8_t relaypin, uint16_t fan_on_time, uint16_t fan_cooldown_time, DhtType sensor_type)
+
+    void Menu::LongUpPress(){Serial.println("Long Up");}
+    void Menu::ShortUpPress() { Serial.println("Short Up"); }
+    void Menu::LongDnPress() { Serial.println("Long Dn"); }
+    void Menu::ShortDnPress() { Serial.println("Short Dn"); }
+    void Menu::LongTwoKeyPress() { Serial.println("Long Two"); }
+    void Menu::ShortTwoKeyPress() { Serial.println("Short Two"); }
+
+    Hood::Hood(uint8_t dhtpin, uint8_t relaypin, uint8_t key_up_pin,
+               uint8_t key_dn_pin, uint16_t fan_on_time, uint16_t fan_cooldown_time, DhtType sensor_type)
         : _config(HoodConfig{fan_on_time,
                              fan_cooldown_time,
                              dhtpin,
                              relaypin,
+                             key_up_pin,
+                             key_dn_pin,
                              sensor_type}),
           _ave(Average<float>(10))
     {
@@ -71,8 +82,61 @@ namespace hood
                 _fan_on = true;
             }
         }
-        UpdateDisplay();
+        //UpdateDisplay();  <<<---------------------------------------------------------
         _dht_error = false;
+    }
+
+    void Hood::KeyPress()
+    {
+        uint32_t start_time = millis();
+        bool btn_up_pressed = false, btn_dn_pressed = false;
+        while (!digitalRead(_config.key_up_pin) || !digitalRead(_config.key_dn_pin))
+        {
+            if (!digitalRead(_config.key_up_pin))
+            {
+                btn_up_pressed = true;
+            }
+            if (!digitalRead(_config.key_dn_pin))
+            {
+                btn_dn_pressed = true;
+            }
+        }
+        if (btn_up_pressed && btn_dn_pressed)
+        {
+            if (millis() - start_time > 1000)
+            {
+                _menu.LongTwoKeyPress();
+            }
+            else
+            {
+                _menu.ShortTwoKeyPress();
+            }
+            btn_up_pressed = false;
+            btn_dn_pressed = false;
+            return;
+        }
+        if (btn_up_pressed)
+        {
+            if (millis() - start_time > 1000)
+            {
+                _menu.LongUpPress();
+            }
+            else
+            {
+                _menu.ShortUpPress();
+            }
+        }
+        if (btn_dn_pressed)
+        {
+            if (millis() - start_time > 1000)
+            {
+                _menu.LongDnPress();
+            }
+            else
+            {
+                _menu.ShortDnPress();
+            }
+        }
     }
 
     void Hood::IncreaseTreshold()
